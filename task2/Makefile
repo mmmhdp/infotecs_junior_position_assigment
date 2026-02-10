@@ -18,9 +18,19 @@ VG_OPTS  ?= --leak-check=full --show-leak-kinds=all --track-origins=yes
 all: release
 
 # ===== run =====
+.PHONY: r
 r: all
-	./build/$(TARGET)
+	./$(BUILD_DIR)/$(TARGET)
 
+# ===== test =====
+.PHONY: t
+t: all
+	cd $(BUILD_DIR) && ctest --rerun-failed --output-on-failure
+
+# ===== docs =====
+.PHONY: docs 
+docs:
+	doxygen Doxyfile
 # ===== release =====
 .PHONY: release
 release:
