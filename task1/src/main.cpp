@@ -1,11 +1,22 @@
+#include <chrono>
 #include <cstdint>
 #include <iostream>
+#include <thread>
 
 struct i_chip_gpio_driver {
   virtual void setHigh(int pin) = 0;
   virtual void setLow(int pin) = 0;
   virtual bool read(int pin) = 0;
   virtual ~i_chip_gpio_driver() = default;
+};
+
+class mock_chip_gpio_driver : public i_chip_gpio_driver {
+public:
+  void setHigh(int pin) override { std::cout << "Pin " << pin << " HIGH\n"; }
+
+  void setLow(int pin) override { std::cout << "Pin " << pin << " LOW\n"; }
+
+  bool read(int pin) override { return false; }
 };
 
 class chip_spi_api {
@@ -52,6 +63,51 @@ private:
   int pinMISO_;
 };
 
+chip_spi_api::chip_spi_api(i_chip_gpio_driver &gpio, int pinCS, int pinSCK,
+                           int pinMOSI, int pinMISO)
+    : m_gpio(gpio), pinCS_(pinCS), pinSCK_(pinSCK), pinMOSI_(pinMOSI),
+      pinMISO_(pinMISO) {
+  deselect();
+  m_gpio.setLow(pinSCK_);
+}
+
+void chip_spi_api::select() { m_gpio.setLow(pinCS_); }
+void chip_spi_api::deselect() { m_gpio.setHigh(pinCS_); }
+
+void chip_spi_api::clockPulse() {
+  m_gpio.setHigh(pinSCK_);
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1));
+
+  m_gpio.setLow(pinSCK_);
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1));
+}
+
+void chip_spi_api::writeBit(bool bit) {
+  if (bit)
+    m_gpio.setHigh(pinMOSI_);
+  else
+    m_gpio.setLow(pinMOSI_);
+  clockPulse();
+}
+
+bool chip_spi_api::readBit() {
+  clockPulse();
+  return m_gpio.read(pinMISO_);
+}
+
+uint8_t chip_spi_api::transfer(uint8_t data) {
+  uint8_t result = 0;
+  for (int i = 7; i >= 0; --i) {
+    bool bitToSend = (data >> i) & 0x1;
+    writeBit(bitToSend);
+    bool bitReceived = m_gpio.read(pinMISO_);
+    result = (result << 1) | (bitReceived ? 1 : 0);
+  }
+  return result;
+}
+
 class eeprom_api {
 public:
   explicit eeprom_api(chip_spi_api &spi);
@@ -93,21 +149,4 @@ private:
   static constexpr uint8_t CMD_WRSR = 0x05;
 };
 
-class mock_chip_gpio_driver : public i_chip_gpio_driver {
-public:
-  void setHigh(int pin) override {
-    std::cout << "Pin " << pin << " HIGH\n";
-  }
-
-  void setLow(int pin) override {
-    std::cout << "Pin " << pin << " LOW\n";
-  }
-
-  bool read(int pin) override {
-    return false;
-  }
-};
-
-int main (void) {
-  return 0;
-}
+int main(void) { return 0; }
