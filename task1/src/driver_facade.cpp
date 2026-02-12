@@ -3,20 +3,6 @@
 #include <iostream>
 #include <thread>
 
-void mock_chip_gpio_driver::setHigh(int pin) {
-#ifdef VERBOSE
-  std::cout << "Pin " << pin << " HIGH\n";
-#endif
-}
-
-void mock_chip_gpio_driver::setLow(int pin) {
-#ifdef VERBOSE
-  std::cout << "Pin " << pin << " LOW\n";
-#endif
-}
-
-bool mock_chip_gpio_driver::read(int pin) { return false; }
-
 chip_spi_api::chip_spi_api(i_chip_gpio_driver &gpio, int pinCS, int pinSCK,
                            int pinMOSI, int pinMISO)
     : m_gpio(gpio), pinCS_(pinCS), pinSCK_(pinSCK), pinMOSI_(pinMOSI),
@@ -25,7 +11,7 @@ chip_spi_api::chip_spi_api(i_chip_gpio_driver &gpio, int pinCS, int pinSCK,
   m_gpio.setLow(pinSCK_);
 }
 
-void chip_spi_api::select() { m_gpio.setLow(pinCS_); }
+void chip_spi_api::select () { m_gpio.setLow(pinCS_); }
 void chip_spi_api::deselect() { m_gpio.setHigh(pinCS_); }
 
 void chip_spi_api::clockPulse() {
@@ -62,7 +48,7 @@ uint8_t chip_spi_api::transfer(uint8_t data) {
   return result;
 }
 
-eeprom_api::eeprom_api(chip_spi_api &spi) : spi_api_(spi) {}
+eeprom_api::eeprom_api(i_chip_spi_api &spi) : spi_api_(spi) {}
 
 void eeprom_api::writeEnable() {
   spi_api_.select();

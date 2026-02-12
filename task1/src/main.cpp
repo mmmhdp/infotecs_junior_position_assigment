@@ -1,4 +1,15 @@
 #include "driver_facade.hpp"
+#include <iostream>
+
+class mock_chip_gpio_driver : public i_chip_gpio_driver {
+  void setHigh(int pin) override {
+    std::cout << "Pin: " << pin << " HIGH" << std::endl;
+  };
+  void setLow(int pin) override {
+    std::cout << "Pin: " << pin << " LOW" << std::endl;
+  };
+  bool read(int pin) override { return false; }
+};
 
 int main() {
   mock_chip_gpio_driver gpio;

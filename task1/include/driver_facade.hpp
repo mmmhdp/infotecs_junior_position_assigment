@@ -9,17 +9,8 @@ struct i_chip_gpio_driver {
   virtual ~i_chip_gpio_driver() = default;
 };
 
-class mock_chip_gpio_driver : public i_chip_gpio_driver {
+class i_chip_spi_api {
 public:
-  void setHigh(int pin) override;
-  void setLow(int pin) override;
-  bool read(int pin) override;
-};
-
-class chip_spi_api {
-public:
-  chip_spi_api(i_chip_gpio_driver &gpio, int pinCS, int pinSCK, int pinMOSI,
-               int pinMISO);
   /*
    * To begin communication
    * master have to
@@ -29,9 +20,8 @@ public:
    * communication and sets
    * slave device's CS to HIGH
    * */
-
-  void select();
-  void deselect();
+  virtual void select() = 0;
+  virtual void deselect() = 0;
 
   /*
    * SPI assume data transfers by bits,
@@ -40,7 +30,19 @@ public:
    * capable only of understand
    * by byte and not by bit communication scenario
    * */
-  uint8_t transfer(uint8_t data);
+  virtual uint8_t transfer(uint8_t data) = 0;
+  ~i_chip_spi_api() = default;
+};
+
+class chip_spi_api : public i_chip_spi_api {
+public:
+  chip_spi_api(i_chip_gpio_driver &gpio, int pinCS, int pinSCK, int pinMOSI,
+               int pinMISO);
+
+  void select() override;
+  void deselect() override;
+
+  uint8_t transfer(uint8_t data) override;
 
 private:
   /*
@@ -60,22 +62,39 @@ private:
   int pinMISO_;
 };
 
-class eeprom_api {
+class i_eeprom_api {
 public:
-  explicit eeprom_api(chip_spi_api &spi);
+  virtual void writeByte(uint16_t address, uint8_t data) = 0;
+  virtual uint8_t readByte(uint16_t address) = 0;
+
+  virtual void writeBuffer(uint16_t address, const uint8_t *data,
+                           std::size_t length) = 0;
+  virtual void readBuffer(uint16_t address, uint8_t *buffer,
+                          std::size_t length) = 0;
+
+  virtual void writeBit(uint16_t address, uint8_t bitPosition, bool value) = 0;
+  virtual bool readBit(uint16_t address, uint8_t bitPosition) = 0;
+  ~i_eeprom_api() = default;
+};
+
+class eeprom_api : public i_eeprom_api {
+public:
+  explicit eeprom_api(i_chip_spi_api &spi);
 
   /*
    * eeprom api we want to have
    * */
 
-  void writeByte(uint16_t address, uint8_t data);
-  uint8_t readByte(uint16_t address);
+  void writeByte(uint16_t address, uint8_t data) override;
+  uint8_t readByte(uint16_t address) override;
 
-  void writeBuffer(uint16_t address, const uint8_t *data, std::size_t length);
-  void readBuffer(uint16_t address, uint8_t *buffer, std::size_t length);
+  void writeBuffer(uint16_t address, const uint8_t *data,
+                   std::size_t length) override;
+  void readBuffer(uint16_t address, uint8_t *buffer,
+                  std::size_t length) override;
 
-  void writeBit(uint16_t address, uint8_t bitPosition, bool value);
-  bool readBit(uint16_t address, uint8_t bitPosition);
+  void writeBit(uint16_t address, uint8_t bitPosition, bool value) override;
+  bool readBit(uint16_t address, uint8_t bitPosition) override;
 
 private:
   /*
@@ -89,7 +108,7 @@ private:
   void sendAddress(uint16_t address);
 
 private:
-  chip_spi_api &spi_api_;
+  i_chip_spi_api &spi_api_;
 
   /*
    * eeprom commands
