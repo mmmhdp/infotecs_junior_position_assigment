@@ -31,6 +31,7 @@ t: all
 .PHONY: docs 
 docs:
 	doxygen Doxyfile
+
 # ===== release =====
 .PHONY: release
 release:
