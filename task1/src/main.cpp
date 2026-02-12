@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <iostream>
 
 struct i_chip_gpio_driver {
   virtual void setHigh(int pin) = 0;
@@ -90,6 +91,21 @@ private:
   static constexpr uint8_t CMD_WREN = 0x06;
   static constexpr uint8_t CMD_RDSR = 0x05;
   static constexpr uint8_t CMD_WRSR = 0x05;
+};
+
+class mock_chip_gpio_driver : public i_chip_gpio_driver {
+public:
+  void setHigh(int pin) override {
+    std::cout << "Pin " << pin << " HIGH\n";
+  }
+
+  void setLow(int pin) override {
+    std::cout << "Pin " << pin << " LOW\n";
+  }
+
+  bool read(int pin) override {
+    return false;
+  }
 };
 
 int main (void) {
