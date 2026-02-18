@@ -19,6 +19,19 @@ add_executable(driver_facade_impl
   ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
+option(SANITIZE_ADDRESS OFF)
+
+if(SANITIZE_ADDRESS)
+    target_compile_options(REPLACE_WITH_TARGET_impl PRIVATE
+        -fsanitize=address
+        -fno-omit-frame-pointer
+    )
+
+    target_link_options(REPLACE_WITH_TARGET_impl PRIVATE
+        -fsanitize=address
+    )
+endif()
+
 target_link_libraries(driver_facade_impl PRIVATE driver_facade)
 target_compile_options(driver_facade_impl PRIVATE)
 target_link_options(driver_facade_impl PRIVATE)

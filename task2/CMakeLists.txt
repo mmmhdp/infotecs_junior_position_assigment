@@ -1,12 +1,6 @@
-# ==============================
-# PROJECT DESCRIPTION
-# ==============================
 cmake_minimum_required(VERSION 3.15...4.0)
 project(task2 LANGUAGES C CXX)
 
-# ==============================
-# PROJECT PROPERTIES
-# ==============================
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -16,9 +10,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)
 
-# ==============================
-# C LIBRARY (CORE IMPLEMENTATION)
-# ==============================
 add_library(mymem STATIC
   ${CMAKE_SOURCE_DIR}/src/mymem.c
 )
@@ -32,9 +23,19 @@ set_target_properties(mymem PROPERTIES
   LINKER_LANGUAGE C
 )
 
-# ==============================
-# MAIN EXECUTABLE (C)
-# ==============================
+option(SANITIZE_ADDRESS OFF)
+
+if(SANITIZE_ADDRESS)
+    target_compile_options(REPLACE_WITH_TARGET_impl PRIVATE
+        -fsanitize=address
+        -fno-omit-frame-pointer
+    )
+
+    target_link_options(REPLACE_WITH_TARGET_impl PRIVATE
+        -fsanitize=address
+    )
+endif()
+
 add_executable(mymem_impl
   ${CMAKE_SOURCE_DIR}/src/main.c
 )
@@ -42,9 +43,6 @@ target_link_libraries(mymem_impl PRIVATE mymem)
 target_compile_options(mymem_impl PRIVATE)
 target_link_options(mymem_impl PRIVATE)
 
-# ==============================
-# TESTS (C++)
-# ==============================
 include(FetchContent)
 
 FetchContent_Declare(

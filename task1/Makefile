@@ -17,14 +17,20 @@ VG_OPTS  ?= --leak-check=full --show-leak-kinds=all --track-origins=yes
 all: release
 
 # ===== run =====
-.PHONY: r
-r: all
+.PHONY: run
+run: all
 	./$(BUILD_DIR)/$(TARGET)
 
+.PHONY: r
+r: run 
+
 # ===== test =====
-.PHONY: t
-t: all
+.PHONY: test
+test: all
 	cd $(BUILD_DIR) && ctest --rerun-failed --output-on-failure
+
+.PHONY: t
+t: test
 
 # ===== docs =====
 .PHONY: docs
@@ -47,6 +53,9 @@ debug:
 		$(GENERATOR)
 	$(CMAKE) --build $(BUILD_DIR_DEBUG)
 
+.PHONY: d
+d: debug
+
 # ===== asan =====
 .PHONY: asan
 asan:
@@ -55,11 +64,17 @@ asan:
 		-DSANITIZE_ADDRESS=ON \
 		$(GENERATOR)
 	$(CMAKE) --build $(BUILD_DIR_ASAN)
+	./$(BUILD_DIR_ASAN)/$(TARGET)
+.PHONY: as
+as: asan
 
 # ===== valgrind =====
 .PHONY: valgrind
 valgrind: debug
 	$(VALGRIND) $(VG_OPTS) ./$(BUILD_DIR_DEBUG)/$(TARGET)
+
+.PHONY: v
+v: valgrind 
 
 # ===== clean =====
 .PHONY: clean
