@@ -68,7 +68,7 @@ public:
 /**
  * @brief Concrete SPI implementation using GPIO bit-banging.
  */
-class chip_spi_api : public i_chip_spi_api {
+class chip_spi_api final : public i_chip_spi_api {
 public:
   /**
    * @brief Construct a chip_spi_api instance.
@@ -140,7 +140,7 @@ public:
 /**
  * @brief EEPROM implementation of i_memory_device_api using SPI.
  */
-class eeprom_api : public i_memory_device_api {
+class eeprom_api final : public i_memory_device_api {
 public:
   /**
    * @brief Construct EEPROM API with SPI interface.
